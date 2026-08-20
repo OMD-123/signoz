@@ -3199,6 +3199,54 @@ components:
         repeatVariable:
           type: string
       type: object
+    DashboardtypesAreaChartAppearance:
+      properties:
+        fillMode:
+          $ref: '#/components/schemas/DashboardtypesAreaFillMode'
+        fillOpacity:
+          $ref: '#/components/schemas/DashboardtypesFillOpacity'
+        lineInterpolation:
+          $ref: '#/components/schemas/DashboardtypesLineInterpolation'
+        lineStyle:
+          $ref: '#/components/schemas/DashboardtypesLineStyle'
+        showPoints:
+          type: boolean
+        spanGaps:
+          $ref: '#/components/schemas/DashboardtypesSpanGaps'
+      type: object
+    DashboardtypesAreaChartPanelSpec:
+      properties:
+        axes:
+          $ref: '#/components/schemas/DashboardtypesAxes'
+        chartAppearance:
+          $ref: '#/components/schemas/DashboardtypesAreaChartAppearance'
+        formatting:
+          $ref: '#/components/schemas/DashboardtypesPanelFormatting'
+        legend:
+          $ref: '#/components/schemas/DashboardtypesLegend'
+        thresholds:
+          items:
+            $ref: '#/components/schemas/DashboardtypesThresholdWithLabel'
+          nullable: true
+          type: array
+        visualization:
+          $ref: '#/components/schemas/DashboardtypesAreaChartVisualization'
+      type: object
+    DashboardtypesAreaChartVisualization:
+      properties:
+        fillSpans:
+          type: boolean
+        stack:
+          $ref: '#/components/schemas/DashboardtypesStackMode'
+        timePreference:
+          $ref: '#/components/schemas/DashboardtypesTimePreference'
+      type: object
+    DashboardtypesAreaFillMode:
+      enum:
+      - solid
+      - gradient
+      - none
+      type: string
     DashboardtypesAxes:
       properties:
         isLogScale:
@@ -3430,6 +3478,11 @@ components:
       - gradient
       - none
       type: string
+    DashboardtypesFillOpacity:
+      maximum: 1
+      minimum: 0
+      nullable: true
+      type: number
     DashboardtypesGettableDashboardV2:
       properties:
         createdAt:
@@ -3892,6 +3945,7 @@ components:
     DashboardtypesPanelPlugin:
       discriminator:
         mapping:
+          signoz/AreaChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec'
           signoz/BarChartPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec'
           signoz/HistogramPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpec'
           signoz/ListPanel: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpec'
@@ -3904,6 +3958,7 @@ components:
       oneOf:
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTimeSeriesPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec'
+      - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesNumberPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesPieChartPanelSpec'
       - $ref: '#/components/schemas/DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpec'
@@ -3915,6 +3970,7 @@ components:
       enum:
       - signoz/TimeSeriesPanel
       - signoz/BarChartPanel
+      - signoz/AreaChartPanel
       - signoz/NumberPanel
       - signoz/PieChartPanel
       - signoz/TablePanel
@@ -3922,6 +3978,18 @@ components:
       - signoz/ListPanel
       - signoz/TextPanel
       type: string
+    DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesAreaChartPanelSpec:
+      properties:
+        kind:
+          enum:
+          - signoz/AreaChartPanel
+          type: string
+        spec:
+          $ref: '#/components/schemas/DashboardtypesAreaChartPanelSpec'
+      required:
+      - kind
+      - spec
+      type: object
     DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesBarChartPanelSpec:
       properties:
         kind:
@@ -4252,6 +4320,12 @@ components:
             are connected.
           type: boolean
       type: object
+    DashboardtypesStackMode:
+      enum:
+      - none
+      - normal
+      - percent
+      type: string
     DashboardtypesStorableDashboardData:
       additionalProperties: {}
       type: object
