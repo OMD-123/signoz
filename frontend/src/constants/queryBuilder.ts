@@ -374,6 +374,7 @@ export enum PANEL_TYPES {
 	LIST = 'list',
 	TRACE = 'trace',
 	BAR = 'bar',
+	AREA = 'area',
 	PIE = 'pie',
 	HISTOGRAM = 'histogram',
 	TEXT = 'text',
