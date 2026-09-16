@@ -43,6 +43,7 @@ export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAl
 export interface AlertmanagertypesChannelSlackConfigDTO {
 	/**
 	 * @type string
+	 * @format password
 	 */
 	apiUrl: string;
 	/**
@@ -113,10 +114,12 @@ export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAl
 export interface AlertmanagertypesChannelWebhookConfigDTO {
 	/**
 	 * @type string
+	 * @format password
 	 */
 	bearerToken?: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	password?: string;
 	/**
@@ -125,6 +128,7 @@ export interface AlertmanagertypesChannelWebhookConfigDTO {
 	sendResolved?: boolean | null;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	url: string;
 	/**
@@ -180,6 +184,7 @@ export interface AlertmanagertypesChannelPagerdutyConfigDTO {
 	group?: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	routingKey: string;
 	/**
@@ -219,6 +224,7 @@ export type AlertmanagertypesChannelOpsgenieConfigDTODetails = {
 export interface AlertmanagertypesChannelOpsgenieConfigDTO {
 	/**
 	 * @type string
+	 * @format password
 	 */
 	apiKey: string;
 	/**
@@ -278,6 +284,7 @@ export interface AlertmanagertypesChannelMSTeamsConfigDTO {
 	title?: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	webhookUrl: string;
 }
@@ -309,6 +316,7 @@ export interface AlertmanagertypesChannelGoogleChatConfigDTO {
 	title?: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	webhookUrl: string;
 }
@@ -332,6 +340,7 @@ export type AlertmanagertypesChannelJiraConfigDTOCustomFields = {
 export interface AlertmanagertypesChannelJiraConfigDTO {
 	/**
 	 * @type string
+	 * @format password
 	 */
 	apiToken: string;
 	/**
@@ -407,6 +416,7 @@ export enum AlertmanagertypesChannelConfigVariantGithubComSigNozSignozPkgTypesAl
 export interface AlertmanagertypesChannelJSMOpsConfigDTO {
 	/**
 	 * @type string
+	 * @format password
 	 */
 	apiKey: string;
 	/**
@@ -466,6 +476,7 @@ export interface AlertmanagertypesChannelIncidentIOConfigDTO {
 	title?: string;
 	/**
 	 * @type string
+	 * @format password
 	 */
 	token: string;
 	/**
@@ -5019,6 +5030,57 @@ export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDa
 	spec: DashboardtypesListPanelSpecDTO;
 }
 
+export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTOKind {
+	'signoz/TextPanel' = 'signoz/TextPanel',
+}
+export interface DashboardtypesHeaderOptionsDTO {
+	/**
+	 * @type boolean
+	 */
+	hide?: boolean;
+}
+
+export enum DashboardtypesTextModeDTO {
+	markdown = 'markdown',
+}
+export enum DashboardtypesTextAlignDTO {
+	left = 'left',
+	center = 'center',
+	right = 'right',
+}
+export enum DashboardtypesVerticalAlignDTO {
+	top = 'top',
+	center = 'center',
+	bottom = 'bottom',
+}
+export interface DashboardtypesTextPresentationDTO {
+	/**
+	 * @type string,null
+	 */
+	background?: string | null;
+	textAlign?: DashboardtypesTextAlignDTO;
+	verticalAlign?: DashboardtypesVerticalAlignDTO;
+}
+
+export interface DashboardtypesTextPanelSpecDTO {
+	headerOptions?: DashboardtypesHeaderOptionsDTO;
+	mode?: DashboardtypesTextModeDTO;
+	presentation?: DashboardtypesTextPresentationDTO;
+	/**
+	 * @type string
+	 */
+	text?: string;
+}
+
+export interface DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO {
+	/**
+	 * @enum signoz/TextPanel
+	 * @type string
+	 */
+	kind: DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTOKind;
+	spec: DashboardtypesTextPanelSpecDTO;
+}
+
 export enum DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTOKind {
 	'signoz/HeatmapPanel' = 'signoz/HeatmapPanel',
 }
@@ -5104,6 +5166,7 @@ export type DashboardtypesPanelPluginDTO =
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTablePanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHistogramPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesListPanelSpecDTO
+	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesTextPanelSpecDTO
 	| DashboardtypesPanelPluginVariantGithubComSigNozSignozPkgTypesDashboardtypesHeatmapPanelSpecDTO;
 
 export enum Querybuildertypesv5RequestTypeDTO {
@@ -6028,6 +6091,7 @@ export enum DashboardtypesPanelPluginKindDTO {
 	'signoz/TablePanel' = 'signoz/TablePanel',
 	'signoz/HistogramPanel' = 'signoz/HistogramPanel',
 	'signoz/ListPanel' = 'signoz/ListPanel',
+	'signoz/TextPanel' = 'signoz/TextPanel',
 	'signoz/HeatmapPanel' = 'signoz/HeatmapPanel',
 }
 /**
