@@ -19,15 +19,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// jsonAttrColRe matches the raw `attributes` JSON column in the SELECT list (a bare column, not
-// the `attributes_string`/`_number`/`_bool` maps), mid-list or as the last column before FROM.
+// jsonAttrColRe matches the bare `attributes` JSON column in the SELECT list, not the legacy maps.
 var jsonAttrColRe = regexp.MustCompile(`,\s*attributes\s*(,| FROM )`)
 
 func newBulkTestBuilder(t *testing.T, releaseTime time.Time) *traceQueryStatementBuilder {
 	t.Helper()
 	fl := flaggertest.New(t)
-	fm := tracestelemetryschema.NewFieldMapper(fl)
-	cb := tracestelemetryschema.NewConditionBuilder(fm, fl)
+	storage := tracestelemetryschema.NewStorage()
 	store := telemetrytypestest.NewMockMetadataStore()
 	store.KeysMap = tracestelemetryschema.BuildCompleteFieldKeyMap(releaseTime)
 	store.KeysMap["http.route"] = []*telemetrytypes.TelemetryFieldKey{{
@@ -38,16 +36,14 @@ func newBulkTestBuilder(t *testing.T, releaseTime time.Time) *traceQueryStatemen
 	}}
 	store.ColumnEvolutionMetadataMap["traces:attribute:__all__"] = tracestelemetryschema.MockAttributeEvolutionData(releaseTime)
 
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, fl)
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, storage, fl, telemetrytypes.SignalTraces)
 	return NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
-		store, fm, cb, aggExprRewriter, nil, fl, false, 100000,
+		store, storage, aggExprRewriter, nil, fl, false, 100000,
 	)
 }
 
-// TestListQuerySelectsAllAttributeHomes: the empty-selectFields list query scans every
-// attributes-bag home (the three legacy maps and the JSON column) in any window, with no
-// evolution lookup.
+// TestListQuerySelectsAllAttributeHomes: every bag home is scanned in any window, with no evolution lookup.
 func TestListQuerySelectsAllAttributeHomes(t *testing.T) {
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	rel := releaseTime.UnixMilli()
@@ -55,7 +51,7 @@ func TestListQuerySelectsAllAttributeHomes(t *testing.T) {
 
 	b := newBulkTestBuilder(t, releaseTime)
 
-	cases := []struct {
+	testCases := []struct {
 		name    string
 		startMs uint64
 		endMs   uint64
@@ -65,10 +61,10 @@ func TestListQuerySelectsAllAttributeHomes(t *testing.T) {
 		{"straddling rollout", uint64(rel - day), uint64(rel + day)},
 	}
 
-	for _, tt := range cases {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
 			stmt, err := b.Build(
-				context.Background(), valuer.UUID{}, tt.startMs, tt.endMs,
+				context.Background(), valuer.UUID{}, testCase.startMs, testCase.endMs,
 				qbtypes.RequestTypeRaw,
 				qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{Signal: telemetrytypes.SignalTraces},
 				nil,
@@ -84,33 +80,70 @@ func TestListQuerySelectsAllAttributeHomes(t *testing.T) {
 	}
 }
 
-// TestGroupByAttributeAfterRolloutReadsJSON pins the post-dual-write guarantee at the statement
-// level: a group-by on an attribute key in a window fully after the rollout reads the JSON column,
-// never the legacy map — so aggregations keep working once map dual-write stops.
-func TestGroupByAttributeAfterRolloutReadsJSON(t *testing.T) {
+// TestGroupByAttributeHomeAcrossRollout: the group-by home follows the window — legacy map
+// before the rollout, JSON with legacy fallback while straddling, JSON only after it.
+func TestGroupByAttributeHomeAcrossRollout(t *testing.T) {
 	releaseTime := time.Date(2025, 5, 22, 22, 0, 0, 0, time.UTC)
 	rel := releaseTime.UnixMilli()
 	day := int64(24 * time.Hour / time.Millisecond)
 
 	b := newBulkTestBuilder(t, releaseTime)
 
-	stmt, err := b.Build(
-		context.Background(), valuer.UUID{}, uint64(rel+day), uint64(rel+2*day),
-		qbtypes.RequestTypeTimeSeries,
-		qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-			Signal:       telemetrytypes.SignalTraces,
-			StepInterval: qbtypes.Step{Duration: 30 * time.Second},
-			Aggregations: []qbtypes.TraceAggregation{{Expression: "count()"}},
-			GroupBy: []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-				Name:          "http.route",
-				FieldContext:  telemetrytypes.FieldContextAttribute,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-			}}},
-			Limit: 10,
+	testCases := []struct {
+		name            string
+		startMs         uint64
+		endMs           uint64
+		wantContains    []string
+		wantNotContains []string
+	}{
+		{
+			name:            "BeforeRollout_ReadsLegacyMap",
+			startMs:         uint64(rel - 2*day),
+			endMs:           uint64(rel - day),
+			wantContains:    []string{"mapContains(attributes_string, 'http.route')", "attributes_string['http.route']"},
+			wantNotContains: []string{"attributes.`http.route`"},
 		},
-		nil,
-	)
-	require.NoError(t, err)
-	assert.Contains(t, stmt.Query, "attributes.`http.route`::String")
-	assert.NotContains(t, stmt.Query, "attributes_string", "post-rollout group-by must not read the legacy map")
+		{
+			name:            "StraddlingRollout_JSONThenLegacyFallback",
+			startMs:         uint64(rel - day),
+			endMs:           uint64(rel + day),
+			wantContains:    []string{"attributes.`http.route` IS NOT NULL", "attributes.`http.route`::String", "attributes_string['http.route']"},
+			wantNotContains: nil,
+		},
+		{
+			name:            "AfterRollout_ReadsJSONOnly",
+			startMs:         uint64(rel + day),
+			endMs:           uint64(rel + 2*day),
+			wantContains:    []string{"attributes.`http.route`::String"},
+			wantNotContains: []string{"attributes_string"},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			stmt, err := b.Build(
+				context.Background(), valuer.UUID{}, testCase.startMs, testCase.endMs,
+				qbtypes.RequestTypeTimeSeries,
+				qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+					Signal:       telemetrytypes.SignalTraces,
+					StepInterval: qbtypes.Step{Duration: 30 * time.Second},
+					Aggregations: []qbtypes.TraceAggregation{{Expression: "count()"}},
+					GroupBy: []qbtypes.GroupByKey{{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+						Name:          "http.route",
+						FieldContext:  telemetrytypes.FieldContextAttribute,
+						FieldDataType: telemetrytypes.FieldDataTypeString,
+					}}},
+					Limit: 10,
+				},
+				nil,
+			)
+			require.NoError(t, err)
+			for _, want := range testCase.wantContains {
+				assert.Contains(t, stmt.Query, want)
+			}
+			for _, unwanted := range testCase.wantNotContains {
+				assert.NotContains(t, stmt.Query, unwanted)
+			}
+		})
+	}
 }
