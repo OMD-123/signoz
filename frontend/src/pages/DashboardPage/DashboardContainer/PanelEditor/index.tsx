@@ -20,10 +20,6 @@ export interface PanelEditorContainerProps {
 	isNew?: boolean;
 	/** Target section for a new panel; falls back to the last/new section. */
 	layoutIndex?: number;
-	/** The dashboard can be edited (unlocked + permission); gates Save. */
-	isEditable: boolean;
-	/** Why Save is disabled (locked / no permission); '' when editable. */
-	editDisabledReason: string;
 	/** Leave the editor (navigate back to the dashboard) without saving. */
 	onClose: () => void;
 	/** Called after a successful save — navigates back to the dashboard. */

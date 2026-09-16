@@ -9,6 +9,7 @@ import { EMPTY_PANEL_QUERY_DATA } from 'pages/DashboardPage/DashboardContainer/q
 import { EQueryType } from 'types/common/dashboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 
+import { useDashboardEditContext } from '../hooks/useDashboardEditContext';
 import { useScrollIntoViewStore } from '../store/useScrollIntoViewStore';
 import ConfigPane from './ConfigPane/ConfigPane';
 import Header from './Header/Header';
@@ -38,16 +39,19 @@ function StaticEditorBody({
 	panelId,
 	isNew = false,
 	layoutIndex,
-	isEditable,
-	editDisabledReason,
 	onClose,
 	onSaved,
 	draftApi,
 	panelDefinition,
 	onChangePanelKind,
 }: StaticEditorBodyProps): JSX.Element {
+	// Read here rather than taken as props: this renders inside a loaded dashboard
+	// subtree, so it resolves the same context every other consumer does.
+	const { isEditable, editChecks, editDisabledTooltip } =
+		useDashboardEditContext();
+
 	const { draft, spec, setSpec, isSpecDirty } = draftApi;
-	const { EditorPane } = panelDefinition;
+	const { EditorPane, Renderer } = panelDefinition;
 
 	const { save, isSaving } = usePanelEditorSave({
 		dashboardId,
@@ -92,7 +96,8 @@ function StaticEditorBody({
 					isSaving={isSaving}
 					showSwitchToView={false}
 					readOnly={!isEditable}
-					readOnlyReason={editDisabledReason}
+					readOnlyChecks={editChecks}
+					readOnlyTooltip={editDisabledTooltip}
 					onSave={onSave}
 					onClose={onCloseEditor}
 				/>
@@ -108,7 +113,7 @@ function StaticEditorBody({
 						hideActions
 					/>
 					<StaticPanelBody
-						panelDefinition={panelDefinition}
+						Renderer={Renderer}
 						panel={draft}
 						panelId={panelId}
 						panelMode={PanelMode.DASHBOARD_EDIT}

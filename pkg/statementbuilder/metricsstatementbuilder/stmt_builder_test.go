@@ -212,7 +212,7 @@ func TestStatementBuilder(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __spatial_aggregation_cte AS (SELECT toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(30)) AS ts, `__GROUP_BY_KEY_0_service.name`, `le`, sum(value) AS value FROM signoz_metrics.distributed_samples_v4 AS points INNER JOIN (SELECT fingerprint, JSONExtractString(labels, 'service.name') AS `__GROUP_BY_KEY_0_service.name`, JSONExtractString(labels, 'le') AS `le` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) AND JSONExtractString(labels, 'service.name') = ? GROUP BY fingerprint, `__GROUP_BY_KEY_0_service.name`, `le`) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY ts, `__GROUP_BY_KEY_0_service.name`, `le`) SELECT ts, `__GROUP_BY_KEY_0_service.name`, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.950) AS value FROM __spatial_aggregation_cte GROUP BY `__GROUP_BY_KEY_0_service.name`, ts ORDER BY `__GROUP_BY_KEY_0_service.name`, ts",
+				Query: "WITH __spatial_aggregation_cte AS (SELECT toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(30)) AS ts, `__GROUP_BY_KEY_0_service.name`, `le`, sum(value)/30 AS value FROM signoz_metrics.distributed_samples_v4 AS points INNER JOIN (SELECT fingerprint, JSONExtractString(labels, 'service.name') AS `__GROUP_BY_KEY_0_service.name`, JSONExtractString(labels, 'le') AS `le` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) AND JSONExtractString(labels, 'service.name') = ? GROUP BY fingerprint, `__GROUP_BY_KEY_0_service.name`, `le`) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY ts, `__GROUP_BY_KEY_0_service.name`, `le`) SELECT ts, `__GROUP_BY_KEY_0_service.name`, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.950) AS value FROM __spatial_aggregation_cte GROUP BY `__GROUP_BY_KEY_0_service.name`, ts ORDER BY `__GROUP_BY_KEY_0_service.name`, ts",
 				Args:  []any{"signoz_latency", uint64(1747936800000), uint64(1747983420000), "delta", "cartservice", "signoz_latency", uint64(1747947390000), uint64(1747983420000)},
 			},
 			expectedErr: nil,
@@ -250,7 +250,7 @@ func TestStatementBuilder(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __spatial_aggregation_cte AS (SELECT toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(30)) AS ts, `__GROUP_BY_KEY_0_service.name`, `le`, sum(value) AS value FROM signoz_metrics.distributed_samples_v4 AS points INNER JOIN (SELECT fingerprint, JSONExtractString(labels, 'service.name') AS `__GROUP_BY_KEY_0_service.name`, JSONExtractString(labels, 'le') AS `le` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) AND JSONExtractString(labels, 'service.name') = ? GROUP BY fingerprint, `__GROUP_BY_KEY_0_service.name`, `le`) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY ts, `__GROUP_BY_KEY_0_service.name`, `le`) SELECT ts, `__GROUP_BY_KEY_0_service.name`, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.950) AS value FROM __spatial_aggregation_cte GROUP BY `__GROUP_BY_KEY_0_service.name`, ts ORDER BY `__GROUP_BY_KEY_0_service.name`, ts",
+				Query: "WITH __spatial_aggregation_cte AS (SELECT toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(30)) AS ts, `__GROUP_BY_KEY_0_service.name`, `le`, sum(value)/30 AS value FROM signoz_metrics.distributed_samples_v4 AS points INNER JOIN (SELECT fingerprint, JSONExtractString(labels, 'service.name') AS `__GROUP_BY_KEY_0_service.name`, JSONExtractString(labels, 'le') AS `le` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) AND JSONExtractString(labels, 'service.name') = ? GROUP BY fingerprint, `__GROUP_BY_KEY_0_service.name`, `le`) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY ts, `__GROUP_BY_KEY_0_service.name`, `le`) SELECT ts, `__GROUP_BY_KEY_0_service.name`, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.950) AS value FROM __spatial_aggregation_cte GROUP BY `__GROUP_BY_KEY_0_service.name`, ts ORDER BY `__GROUP_BY_KEY_0_service.name`, ts",
 				Args:  []any{"signoz_latency", uint64(1747936800000), uint64(1747983420000), "delta", "cartservice", "signoz_latency", uint64(1747947390000), uint64(1747983420000)},
 			},
 			expectedErr: nil,
@@ -292,7 +292,7 @@ func TestStatementBuilder(t *testing.T) {
 				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
 				Aggregations: []qbtypes.MetricAggregation{
 					{
-						MetricName:       "signoz_latency",
+						MetricName:       "signoz_latency.bucket",
 						Type:             metrictypes.HistogramType,
 						Temporality:      metrictypes.Delta,
 						TimeAggregation:  metrictypes.TimeAggregationIncrease,
@@ -309,7 +309,7 @@ func TestStatementBuilder(t *testing.T) {
 			},
 			expected: qbtypes.Statement{
 				Query: "WITH __spatial_aggregation_cte AS (SELECT toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts, `__GROUP_BY_KEY_0_service.name`, `le`, sum(value) AS value FROM signoz_metrics.distributed_samples_v4 AS points INNER JOIN (SELECT fingerprint, JSONExtractString(labels, 'service.name') AS `__GROUP_BY_KEY_0_service.name`, JSONExtractString(labels, 'le') AS `le` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) GROUP BY fingerprint, `__GROUP_BY_KEY_0_service.name`, `le`) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY ts, `__GROUP_BY_KEY_0_service.name`, `le`) SELECT ts, `__GROUP_BY_KEY_0_service.name`, lagInFrame(toFloat64(le), 1, toFloat64('-Inf')) OVER __heatmap_window AS __bucket_min, toFloat64(le) AS __bucket_max, greatest(value - lagInFrame(value, 1, 0) OVER __heatmap_window, 0) AS __result_0 FROM __spatial_aggregation_cte WINDOW __heatmap_window AS (PARTITION BY `__GROUP_BY_KEY_0_service.name`, ts ORDER BY toFloat64(le)) ORDER BY `__GROUP_BY_KEY_0_service.name`, ts, toFloat64(le)",
-				Args:  []any{"signoz_latency", uint64(1747936800000), uint64(1747983420000), "delta", "signoz_latency", uint64(1747947360000), uint64(1747983420000)},
+				Args:  []any{"signoz_latency.bucket", uint64(1747936800000), uint64(1747983420000), "delta", "signoz_latency.bucket", uint64(1747947360000), uint64(1747983420000)},
 			},
 			expectedErr: nil,
 		},
@@ -324,7 +324,7 @@ func TestStatementBuilder(t *testing.T) {
 				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
 				Aggregations: []qbtypes.MetricAggregation{
 					{
-						MetricName:       "signoz_latency",
+						MetricName:       "signoz_latency.bucket",
 						Type:             metrictypes.HistogramType,
 						Temporality:      metrictypes.Delta,
 						TimeAggregation:  metrictypes.TimeAggregationRate,
@@ -341,7 +341,7 @@ func TestStatementBuilder(t *testing.T) {
 			},
 			expected: qbtypes.Statement{
 				Query: "WITH __spatial_aggregation_cte AS (SELECT toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(60)) AS ts, `__GROUP_BY_KEY_0_service.name`, `le`, sum(value) AS value FROM signoz_metrics.distributed_samples_v4 AS points INNER JOIN (SELECT fingerprint, JSONExtractString(labels, 'service.name') AS `__GROUP_BY_KEY_0_service.name`, JSONExtractString(labels, 'le') AS `le` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) GROUP BY fingerprint, `__GROUP_BY_KEY_0_service.name`, `le`) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY ts, `__GROUP_BY_KEY_0_service.name`, `le`) SELECT ts, `__GROUP_BY_KEY_0_service.name`, lagInFrame(toFloat64(le), 1, toFloat64('-Inf')) OVER __heatmap_window AS __bucket_min, toFloat64(le) AS __bucket_max, greatest(value - lagInFrame(value, 1, 0) OVER __heatmap_window, 0) AS __result_0 FROM __spatial_aggregation_cte WINDOW __heatmap_window AS (PARTITION BY `__GROUP_BY_KEY_0_service.name`, ts ORDER BY toFloat64(le)) ORDER BY `__GROUP_BY_KEY_0_service.name`, ts, toFloat64(le)",
-				Args:  []any{"signoz_latency", uint64(1747936800000), uint64(1747983420000), "delta", "signoz_latency", uint64(1747947360000), uint64(1747983420000)},
+				Args:  []any{"signoz_latency.bucket", uint64(1747936800000), uint64(1747983420000), "delta", "signoz_latency.bucket", uint64(1747947360000), uint64(1747983420000)},
 			},
 			expectedErr: nil,
 		},
@@ -394,7 +394,6 @@ func TestStatementBuilder(t *testing.T) {
 						SpaceAggregation: metrictypes.SpaceAggregationSum,
 						HeatmapBucketing: &qbtypes.HeatmapBucketing{
 							Kind:       qbtypes.BucketsKindLinear,
-							LogScale:   qbtypes.MaxLogScale,
 							MaxValue:   500,
 							NumBuckets: 25,
 						},
@@ -538,7 +537,7 @@ func TestStatementBuilder(t *testing.T) {
 				},
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __temporal_aggregation_cte AS (SELECT ts, `__GROUP_BY_KEY_0_service.name`, `le`, multiIf(row_number() OVER rate_window = 1, nan, (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) < 0, per_series_value, per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) AS per_series_value FROM (SELECT fingerprint, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(30)) AS ts, `__GROUP_BY_KEY_0_service.name`, `le`, max(value) AS per_series_value FROM signoz_metrics.distributed_samples_v4 AS points INNER JOIN (SELECT fingerprint, JSONExtractString(labels, 'service.name') AS `__GROUP_BY_KEY_0_service.name`, JSONExtractString(labels, 'le') AS `le` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) GROUP BY fingerprint, `__GROUP_BY_KEY_0_service.name`, `le`) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY fingerprint, ts, `__GROUP_BY_KEY_0_service.name`, `le` ORDER BY fingerprint, ts) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)), __spatial_aggregation_cte AS (SELECT ts, `__GROUP_BY_KEY_0_service.name`, `le`, sum(per_series_value) AS value FROM __temporal_aggregation_cte WHERE isNaN(per_series_value) = ? GROUP BY ts, `__GROUP_BY_KEY_0_service.name`, `le`) SELECT ts, `__GROUP_BY_KEY_0_service.name`, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.950) AS value FROM __spatial_aggregation_cte GROUP BY `__GROUP_BY_KEY_0_service.name`, ts ORDER BY `__GROUP_BY_KEY_0_service.name`, ts",
+				Query: "WITH __temporal_aggregation_cte AS (SELECT ts, `__GROUP_BY_KEY_0_service.name`, `le`, multiIf(row_number() OVER rate_window = 1, nan, (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) < 0, per_series_value / (ts - lagInFrame(ts, 1) OVER rate_window), (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) / (ts - lagInFrame(ts, 1) OVER rate_window)) AS per_series_value FROM (SELECT fingerprint, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(30)) AS ts, `__GROUP_BY_KEY_0_service.name`, `le`, max(value) AS per_series_value FROM signoz_metrics.distributed_samples_v4 AS points INNER JOIN (SELECT fingerprint, JSONExtractString(labels, 'service.name') AS `__GROUP_BY_KEY_0_service.name`, JSONExtractString(labels, 'le') AS `le` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) GROUP BY fingerprint, `__GROUP_BY_KEY_0_service.name`, `le`) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY fingerprint, ts, `__GROUP_BY_KEY_0_service.name`, `le` ORDER BY fingerprint, ts) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)), __spatial_aggregation_cte AS (SELECT ts, `__GROUP_BY_KEY_0_service.name`, `le`, sum(per_series_value) AS value FROM __temporal_aggregation_cte WHERE isNaN(per_series_value) = ? GROUP BY ts, `__GROUP_BY_KEY_0_service.name`, `le`) SELECT ts, `__GROUP_BY_KEY_0_service.name`, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.950) AS value FROM __spatial_aggregation_cte GROUP BY `__GROUP_BY_KEY_0_service.name`, ts ORDER BY `__GROUP_BY_KEY_0_service.name`, ts",
 				Args:  []any{"http_server_duration_bucket", uint64(1747936800000), uint64(1747983420000), "cumulative", "http_server_duration_bucket", uint64(1747947360000), uint64(1747983420000), 0},
 			},
 			expectedErr: nil,

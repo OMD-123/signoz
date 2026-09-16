@@ -81,7 +81,7 @@ func (b *BucketOptions) ToHeatmapBucketing() HeatmapBucketing {
 	return resolved
 }
 
-// This cannot be called in validateHeatmap cuz type is resolved in querier.go.
+// This cannot be called in validateHeatmap cuz metric type is resolved in querier.go.
 func (a *MetricAggregation) VerifyAndApplyBucketOptions(bucketOptions *BucketOptions) error {
 	switch a.Type {
 	case metrictypes.HistogramType:
@@ -102,7 +102,7 @@ func (a *MetricAggregation) VerifyAndApplyBucketOptions(bucketOptions *BucketOpt
 			"heatmaps need a metric whose type is known: no type is recorded for %q, so its bucket axis cannot be chosen", a.MetricName)
 	case metrictypes.ExpHistogramType:
 		return errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported,
-			"heatmaps are not supported for exponential histograms yet: %q keeps its bucket counts in a sketch column, which needs its own reader", a.MetricName)
+			"heatmaps are not supported for exponential histograms yet")
 	default:
 		return errors.Newf(errors.TypeUnsupported, errors.CodeUnsupported,
 			"heatmaps are not supported for %s metrics", a.Type.StringValue())
